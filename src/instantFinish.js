@@ -12,6 +12,8 @@ form.set('toolSessionID', toolSessionID);
 form.set('mode', 'learner');
 form.set('method', 'finish');
 
+console.log(form);
+
 fetch(origin + finishUrl, {
   method: 'POST',
   headers: {
@@ -28,5 +30,5 @@ fetch(origin + finishUrl, {
         console.log(err);
         lock = false; // continue
     }
-});
+  });
 });
