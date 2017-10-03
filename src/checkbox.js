@@ -4,13 +4,25 @@ const fs = require('fs');
 const mkdirp = require('mkdirp');
 const credentials = require('./credentials.json');
 const settings = require('./checkbox.settings.json');
+const folder = 'checkbox';
 
 const { questionCount, questionUid0, origin, submitUrl, resubmitUrl, sessionMapID } = settings;
-const choices = [true, false];
+const choices = ['true', 'false'];
 
 let numIterate = 0;
 let lock = false;
+let gotcha = false;
 const bufferFetch = [];
+
+const urlParamsToObj = entries => {
+    const obj = {};
+    let { done, value } = entries.next();
+    while(!done) {
+        obj[value[0]] = value[1];
+        ({ done, value } = entries.next());
+    }
+    return obj;
+}
 
 const executeFetch = (form, outId) => {
     return () => {
@@ -33,7 +45,7 @@ const executeFetch = (form, outId) => {
             })
             .then(res => {
                 lock = false;
-                if(bufferFetch[0]) {
+                if(bufferFetch[0] && !gotcha) {
                     bufferFetch[0]();
                     bufferFetch.shift();
                 }
@@ -43,8 +55,12 @@ const executeFetch = (form, outId) => {
             console.log('Successfully retrieved:', outId);
             return res.text();
         })
-        .then(res => mkdirp('src/outputs/checkbox', () => {
-            fs.writeFile(`src/outputs/checkbox/out-${outId}.html`, res, err => {
+        .then(res => mkdirp(`src/outputs/${folder}`, () => {
+            if(res.includes('good job') || res.includes('Excellent')) {
+                console.log('Gotcha!', urlParamsToObj(form.entries()));
+                gotcha = true;
+            };
+            fs.writeFile(`src/outputs/${folder}/out-${outId}.html`, res, err => {
                 if(err) {
                     console.log(err);
                     lock = false; // continue
