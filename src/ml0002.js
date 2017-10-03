@@ -31,7 +31,7 @@ const executeFetch = (form, outId) => {
             console.log('Successfully retrieved:', outId);
             return res.text();
         })
-        .then(res => fs.writeFile(`./outputs/out-${outId}.html`, res, err => {
+        .then(res => fs.writeFile(`src/outputs/out-${outId}.html`, res, err => {
             if(err) {
                 console.log(err);
                 lock = false; // continue
