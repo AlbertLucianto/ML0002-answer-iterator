@@ -5,6 +5,7 @@ const mkdirp = require('mkdirp');
 const credentials = require('./credentials.json');
 const settings = require('./dropdown.settings.json');
 const folder = 'dropdown';
+const reqDelay = 2000;
 
 const { questionCount, questionUid0, origin, submitUrl, resubmitUrl, sessionMapID, choices } = settings;
 
@@ -45,8 +46,10 @@ const executeFetch = (form, outId) => {
             .then(res => {
                 lock = false;
                 if(bufferFetch[0] && !gotcha) {
-                    bufferFetch[0]();
-                    bufferFetch.shift();
+                    setTimeout(() => {
+                        bufferFetch[0]();
+                        bufferFetch.shift();
+                    }, reqDelay);
                 }
                 return res.text();
             })

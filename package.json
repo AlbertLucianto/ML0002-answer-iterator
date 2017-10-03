@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:dd": "./node_modules/.bin/babel-node src/dropdown.js",
-    "start:cb": "./node_modules/.bin/babel-node src/checkbox.js"
+    "start:cb": "./node_modules/.bin/babel-node src/checkbox.js",
+    "start:if": "./node_modules/.bin/babel-node src/instantFinish.js"
   },
   "keywords": [],
   "author": "",

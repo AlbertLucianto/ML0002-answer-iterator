@@ -5,6 +5,7 @@ const mkdirp = require('mkdirp');
 const credentials = require('./credentials.json');
 const settings = require('./checkbox.settings.json');
 const folder = 'checkbox';
+const reqDelay = 2000;
 
 const { questionCount, questionUid0, origin, submitUrl, resubmitUrl, sessionMapID } = settings;
 const choices = ['true', 'false'];
@@ -46,8 +47,10 @@ const executeFetch = (form, outId) => {
             .then(res => {
                 lock = false;
                 if(bufferFetch[0] && !gotcha) {
-                    bufferFetch[0]();
-                    bufferFetch.shift();
+                    setTimeout(() => {
+                        bufferFetch[0]();
+                        bufferFetch.shift();
+                    }, reqDelay);
                 }
                 return res.text();
             })
