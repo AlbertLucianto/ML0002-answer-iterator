@@ -5,7 +5,7 @@ const mkdirp = require('mkdirp');
 const credentials = require('./credentials.json');
 const settings = require('./checkbox.settings.json');
 
-const { questionCount, questionUid0, origin, url } = settings;
+const { questionCount, questionUid0, origin, submitUrl, resubmitUrl, sessionMapID } = settings;
 const choices = [true, false];
 
 let numIterate = 0;
@@ -15,21 +15,31 @@ const bufferFetch = [];
 const executeFetch = (form, outId) => {
     return () => {
         lock = true;
-        fetch(origin + url, {
+        fetch(origin + submitUrl + sessionMapID, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Cookie': credentials.cookies
+                'Cookie': Object.keys(credentials.cookies).reduce((pre, cur) => `${pre}${cur}=${credentials.cookies[cur]}; `, '')
             },
             body: form,
-            mode: 'no-cors'
         })
         .then(res => {
-            if(bufferFetch[0]) {
-                bufferFetch[0]();
-                bufferFetch.shift();
+            fetch(origin + resubmitUrl + sessionMapID, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Cookie': Object.keys(credentials.cookies).reduce((pre, cur) => `${pre}${cur}=${credentials.cookies[cur]}; `, '')
+                }
+            })
+            .then(res => {
                 lock = false;
-            }
+                if(bufferFetch[0]) {
+                    bufferFetch[0]();
+                    bufferFetch.shift();
+                }
+                return res.text();
+            })
+            .then(res => console.log('Resubmit:', outId));
             console.log('Successfully retrieved:', outId);
             return res.text();
         })

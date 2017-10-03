@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en-AU" dir="LTR">
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#337ab7">
+	<title>Assessment</title>
+	<!-- ********************  CSS ********************** -->
+<link href="https://lams.ntu.edu.sg/lams/css/defaultHTML_learner.css" rel="stylesheet" type="text/css">
+<link href="/lams/tool/laasse10/includes/css/assessment.css" rel="stylesheet" type="text/css">
+
+ <!-- ********************  javascript ********************** -->
+<script type="text/javascript" src="https://lams.ntu.edu.sg/lams/includes/javascript/common.js"></script>
+<script type="text/javascript" src="https://lams.ntu.edu.sg/lams/includes/javascript/jquery.js"></script>
+<script type="text/javascript" src="https://lams.ntu.edu.sg/lams/includes/javascript/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://lams.ntu.edu.sg/lams/includes/javascript/bootstrap.tabcontroller.js"></script><script type="text/javascript" src="https://lams.ntu.edu.sg/lams//includes/javascript/jquery.timeago.js"></script> 
+	<script type="text/javascript" src="https://lams.ntu.edu.sg/lams/includes/javascript/timeagoi18n/jquery.timeago.en.js"></script>
+
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$("time.timeago").timeago();
+		});
+	
+		function disableButtons() {
+			$('.btn').prop('disabled',true);
+		}
+		
+		function finishSession(){
+			disableButtons();
+			document.location.href ='/lams/tool/laasse10/learning/finish.do?sessionMapID=sessionMapID-15407&mode=learner&toolSessionID=377561';
+			return false;
+		}
+		
+		function continueReflect(){
+			disableButtons();
+			document.location.href='/lams/tool/laasse10/learning/newReflection.do?sessionMapID=sessionMapID-15407';
+		}
+		
+		function nextPage(pageNumber){
+			disableButtons();
+        	document.location.href="/lams/tool/laasse10/learning/nextPage.do?sessionMapID=sessionMapID-15407&pageNumber=" + pageNumber;
+		}	
+		
+		function resubmit(){
+			disableButtons();
+			document.location.href ="/lams/tool/laasse10/learning/resubmit.do?sessionMapID=sessionMapID-15407";
+			return false;			
+		}
+    </script>
+</head>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+ 
+  ga('create', 'UA-88432830-1', 'auto');
+  ga('send', 'pageview');
+ 
+</script>
+<body class="stripes">
+
+	<link href="https://lams.ntu.edu.sg/lams/css/defaultHTML_progressBar.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="https://lams.ntu.edu.sg/lams/includes/javascript/snap.svg.js"></script>
+		<script type="text/javascript" src="https://lams.ntu.edu.sg/lams/includes/javascript/progressBar.js"></script>
+		
+		<script type="text/javascript">
+			var allowRestart = false,
+				restartLessonConfirmation = "Are you sure you want to start the lesson from the beginning?",
+				toolSessionId = '377561',
+				lessonId = '',
+				mode = 'learner',
+				
+				LAMS_URL = 'https://lams.ntu.edu.sg/lams/',
+				LEARNING_URL = LAMS_URL + 'learning/',
+
+				// it gets initialised along with progress bar
+				commandWebsocketInitTime = null,
+				commandWebsocket = null,
+				commandWebsocketPingTimeout = null,
+				commandWebsocketPingFunc = null,
+				commandWebsocketReconnectAttempts = 0,
+				
+				bars = {
+					'learnerMainBar' : {
+						'containerId' : 'progressBarDiv'
+					}
+				};
+				
+			commandWebsocketPingFunc = function(skipPing){
+				if (commandWebsocket.readyState == commandWebsocket.CLOSING 
+						|| commandWebsocket.readyState == commandWebsocket.CLOSED){
+					return;
+				}
+				
+				// check and ping every 3 minutes
+				commandWebsocketPingTimeout = setTimeout(commandWebsocketPingFunc, 3*60*1000);
+				// initial set up does not send ping
+				if (!skipPing) {
+					commandWebsocket.send("ping");
+				}
+			};
+				
+			function restartLesson(){
+				if (confirm(restartLessonConfirmation)) {
+					window.location.href = LEARNING_URL + 'learner.do?method=restartLesson&lessonID=' + lessonId;
+				}
+			}
+
+			function viewNotebookEntries(){
+				openPopUp(LEARNING_URL + "notebook.do?method=viewAll&lessonID=" + lessonId,
+						"Notebook",
+						648,1152,
+						"no");
+				hideSlideMenu(); /* For touch screen */
+			}
+		
+			function closeWindow() {
+	 			top.window.close();
+			}
+
+			function toggleSlideMenu() {	
+				if ( $("nav.sidebar").hasClass("expandmenu") ) {
+					hideSlideMenu();
+				}
+				else 
+					$("nav.sidebar").addClass("expandmenu");
+			}
+
+			function hideSlideMenu() {	
+				hideProgressBars();
+				$("nav.sidebar").removeClass("expandmenu");
+			}
+			
+			function onProgressBarLoaded() {
+				$('#exitlabel').html(LABELS.EXIT);
+				$('#notebooklabel').html(LABELS.NOTEBOOK);
+				$('#supportlabel').html(LABELS.SUPPORT_ACTIVITIES);
+				$('#progresslabel').html(LABELS.PROGRESS_BAR);
+				if ( allowRestart ) {
+					$('#restartlabel').html(LABELS.RESTART);
+					restartLessonConfirmation = LABELS.CONFIRM_RESTART;
+					$('#restartitem').show();
+				}
+				$('#sidebar').show();
+			}
+
+			function initCommandWebsocket(){
+				commandWebsocketInitTime = Date.now();
+				// it is not an obvious place to init the websocket, but we need lesson ID
+				commandWebsocket = new WebSocket(LEARNING_URL.replace('http', 'ws')
+						+ 'commandWebsocket?lessonID=' + lessonId);
+
+				commandWebsocket.onclose = function(e){
+					// check reason and whether the close did not happen immediately after websocket creation
+					// (possible access denied, user logged out?)
+					if (e.code === 1006 &&
+						Date.now() - commandWebsocketInitTime > 1000 &&
+						commandWebsocketReconnectAttempts < 20) {
+						commandWebsocketReconnectAttempts++;
+						// maybe iPad went into sleep mode?
+						// we need this websocket working, so init it again after delay
+						setTimeout(initCommandWebsocket, 3000);
+					}
+				};
+
+				// set up timer for the first time
+				commandWebsocketPingFunc(true);
+				
+				// when the server pushes new commands
+				commandWebsocket.onmessage = function(e){
+					// read JSON object
+					var command = JSON.parse(e.data);
+					if (command.message) {
+						alert(command.message);
+					}
+					if (command.redirectURL) {
+						window.location.href = command.redirectURL;
+					}
+
+					// reset ping timer
+					clearTimeout(commandWebsocketPingTimeout);
+					commandWebsocketPingFunc(true);
+				};
+			}
+			
+			$(document).ready(function() {
+				var showControlBar = 1; // 0/1/2 none/full/keep space
+				var showIM = true;
+				if ( window.name.match("LearnerActivity") || window.parent.name.match("LearnerActivity")) { 
+					// popup window
+					showControlBar = 0;
+					showIM = false;
+				} else 	if ( window.frameElement ) { // parallel
+					var myId = window.frameElement.id;
+					if ( myId ) {
+						if ( myId == 'lamsDynamicFrame0' ) {
+							showIM = false;
+						} else if ( myId == 'lamsDynamicFrame1') {
+							showControlBar = 2;
+						}
+					}
+				}
+
+				if ( lessonId != "" || toolSessionId != "" ) {
+					$.ajax({
+						url : LEARNING_URL + 'learner.do',
+						data : {
+							'method'   : 'getLessonDetails',
+							'lessonID' : lessonId,
+							'toolSessionID' : toolSessionId,
+						},
+						cache : false,
+						dataType : 'json',
+						success : function(result) {
+							
+							lessonId = result.lessonID;
+							
+							if ( showControlBar == 1  ) {
+								allowRestart = result.allowRestart;
+								$('.lessonName').html(result.title.replace(/_/g, " "));
+								fillProgressBar('learnerMainBar');
+								$('#navcontent').addClass('navcontent');
+							} else if ( showControlBar == 2 ) {
+								$('#navcontent').addClass('navcontent');
+							}
+							
+							var presenceEnabledPatch = result.presenceEnabledPatch;
+							var presenceImEnabled = result.presenceImEnabled;
+							if ( showIM && (presenceEnabledPatch || presenceImEnabled) ) {
+								presenceURL = LEARNING_URL+"presenceChat.jsp?presenceEnabledPatch="+presenceEnabledPatch
+										+"&presenceImEnabled="+presenceImEnabled+"&lessonID="+lessonId;
+								
+								$('#presenceEnabledPatchDiv').load(presenceURL, function( response, status, xhr ) {
+									if ( status == "error" ) {
+										alert("Unable to load IM: " + xhr.status);
+									} 
+								});
+							}
+
+							initCommandWebsocket();
+						}
+					});
+				}
+
+
+			});
+			
+		</script>
+	
+		<nav class="navbar navbar-default sidebar" id="sidebar" role="navigation" onMouseEnter="javascript:toggleSlideMenu()" onMouseLeave="javascript:hideSlideMenu()" style="display:none" >
+		    <div class="container-fluid">
+				<!-- Brand and toggle get grouped for better mobile display -->
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-sidebar-navbar-collapse-1">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand visible-xs hidden-sm hidden-md hidden-lg" href="#"><span class="lessonName"></span></a>
+				</div>
+				<!-- Collect the nav links, forms, and other content for toggling -->
+				<div class="collapse navbar-collapse" id="bs-sidebar-navbar-collapse-1">
+					<ul class="nav navbar-nav">
+						<li><a href="#" class="hidden-xs visible-sm visible-md visible-lg slidesidemenu" onClick="javascript:toggleSlideMenu(); return false;">
+							<i class="pull-right fa fa-bars"></i>
+							<p class="lessonName"></p></a></li>
+						<li><a href="#" onClick="javascript:closeWindow()" ><span id="exitlabel">Exit</span><i class="pull-right fa fa-times"></i></a></li>
+						<li><a href="#" onClick="javascript:viewNotebookEntries(); return false;" ><span id="notebooklabel">Notebook</span><i class="pull-right fa fa-book"></i></a></li>
+						<li id="restartitem" style="display:none"><a href="#" onClick="javascript:restartLesson()"><span id="restartlabel">Restart</span><i class="pull-right fa fa-fast-backward "></i></a></li>
+						<li id="supportitem" style="display:none"><a href="#" class="slidesidemenu" onClick="javascript:toggleSlideMenu(); return false;">
+							<span id="supportlabel">Support Activities</span><i class="pull-right fa fa-th-large"></i></a>
+							<div id="supportPart" class="progressBarContainer"></div>
+						<li><a href="#" class="slidesidemenu" onClick="javascript:toggleSlideMenu(); return false;">
+							<span id="progresslabel">My Progress</span><i class="pull-right fa fa-map"></i></a>
+							<div id="progressBarDiv" class="progressBarContainer"></div></li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+
+	<div id="navcontent" class="content">
+			<div class="row no-gutter no-margin">
+			<div class="col-xs-12">
+			<div class="container">
+				<div class="panel panel-default panel-learner-page">
+						<div class="panel-body panel-learner-body">
+							<div class="row no-gutter">
+	<div class="col-xs-12 col-sm-offset-2 col-sm-8">
+		<div id="passing-mark-not-reached" class="alert alert-warning" style="margin-bottom: 10px; padding: 8px">
+			<div class="media">
+				<div class="media-left">
+					<i class="fa fa-lg fa-exclamation-circle text-muted"></i>
+				</div>
+				<div class="media-body">
+					<a href="#" class="close pull-right" data-dismiss="alert" aria-label="close">&times;</a>
+					Sorry, you haven't scored 1 required to pass the activity. Please, try one more time.</div>
+			</div>
+		</div>
+	</div>
+</div>
+<br>
+		
+		<!--
+		<tr>
+			<th style="width: 130px;">
+				Started on</th>
+			<td >
+				3 October 2017 9:46:04 PM</td>
+		</tr>
+		
+		<tr>
+			<th>
+				Completed on</th>
+			<td>
+				3 October 2017 9:46:05 PM</td>
+		</tr>
+		<tr>
+			<th>
+				Time taken (minutes)</th>
+			<td>
+				0hour(s)0minutes</td>
+		</tr>
+-->
+<div class="row no-gutter">
+	<div class="col-xs-12 col-sm-offset-2 col-sm-8">
+		<div id="attempt-summary" class="alert alert-info" style="margin-bottom: 10px; padding: 8px">
+			<div class="media">
+				<div class="media-left">
+					<i class="fa fa-lg fa-info-circle text-muted"></i>
+				</div>
+				<div class="media-body">
+					<table class="table table-hover">
+		<tr>
+			<th>
+				Feedback</th>
+			<td>
+				Sorry, Wrong Answer. Please try again.</td>
+		</tr>			
+	</table>
+	<br><br>
+</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="space-bottom-top align-right">
+				<button type="submit" onclick="resubmit()" class="btn btn-default">
+						Resubmit</button>
+				</div>
+		</div>
+					</div>
+				<div id="presenceEnabledPatchDiv"></div>
+				</div>
+				</div>
+			</div>
+		</div>
+
+	</body>
+</html>
