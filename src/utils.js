@@ -102,7 +102,7 @@ const runCreator = ({
 
   const iterateQuestions = (questions, { duplicate }) => {
       questions.forEach((val, idx) => {
-          form.set(`questionUid`, idx);
+        //   form.set(`questionUid`, idx);
       });
   }
 
