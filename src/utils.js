@@ -16,8 +16,8 @@ export const parseConfig = args => {
 
 const runCreator = ({
   numIterate, lock, gotcha, bufferFetch, settings, credentials,
-  folder, reqDelay, questionCount, questionUid0, origin, submitUrl,
-  resubmitUrl, sessionMapID, choices
+  folder, reqDelay, questions, origin, submitUrl,
+  resubmitUrl, sessionMapID
 }) => {
   const urlParamsToObj = entries => {
     const obj = {};
@@ -89,13 +89,21 @@ const runCreator = ({
     else {
         const outId = numIterate++;
         const form = new URLSearchParams();
-        form.set('questionUid0', questionUid0);
+        questions.forEach((val, index) => {
+          form.set(`questionUid${index}`, val.id);
+        });
         Array.prototype.forEach.call(answers, (val, idx) => {
             form.set(`question0_${idx}`, val);
         });
         if(lock) bufferFetch.push(executeFetch(form, outId));
         else executeFetch(form, outId)();
     }
+  }
+
+  const iterateQuestions = (questions, { duplicate }) => {
+      questions.forEach((val, idx) => {
+
+      });
   }
 
   return tryAllCombination;

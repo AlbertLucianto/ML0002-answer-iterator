@@ -5,7 +5,7 @@ import runCreator, { parseConfig } from './utils';
 const folder = 'dropdown';
 const reqDelay = 500;
 
-const { questionCount, questionUid0, origin, submitUrl, resubmitUrl, sessionMapID, choices } = settings;
+const { questionCount, questions, origin, submitUrl, resubmitUrl, sessionMapID, choices } = settings;
 
 let numIterate = 0;
 let lock = false;
@@ -14,6 +14,6 @@ const bufferFetch = [];
 
 runCreator({
     numIterate, lock, gotcha, bufferFetch, settings, credentials,
-    folder, reqDelay, questionCount, questionUid0, origin, submitUrl,
+    folder, reqDelay, questionCount, questionUid, origin, submitUrl,
     resubmitUrl, sessionMapID, choices
 })([], choices, parseConfig(process.argv.slice(2)));
