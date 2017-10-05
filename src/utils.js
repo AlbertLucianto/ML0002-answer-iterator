@@ -70,7 +70,7 @@ const runCreator = ({
             fs.writeFile(`src/outputs/${folder}/out-${outId}.html`, res, err => {
                 if(err) {
                     console.log(err);
-                    lock = false; // continue
+                    lock = false;
                 }
             });
         })

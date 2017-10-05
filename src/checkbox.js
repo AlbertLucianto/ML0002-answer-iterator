@@ -3,10 +3,10 @@ import settings from './checkbox.settings.json';
 import runCreator, { parseConfig } from './utils';
 
 const folder = 'checkbox';
-const reqDelay = 2000;
+const reqDelay = 500;
 
 const { questionCount, questionUid0, origin, submitUrl, resubmitUrl, sessionMapID } = settings;
-const choices = ['true', 'false'];
+const choices = ['on', null];
 
 let numIterate = 0;
 let lock = false;
